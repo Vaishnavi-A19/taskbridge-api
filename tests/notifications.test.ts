@@ -6,6 +6,7 @@
  * - audit history date range filter
  * - audit history eventType filter
  * - unauthorized access blocking audit listing across orgs
+ * - marking notifications as read
  */
 
 import request from 'supertest';
@@ -87,4 +88,16 @@ test('Audit history query by event type', async () => {
 test('Unauthorized user cannot access another org audit log', async () => {
   const res = await request(app).get('/v1/audit/proj-1').set('Authorization','Bearer unknown-token');
   expect(res.status).toBe(401);
+});
+
+test('Mark notification as read', async () => {
+  // fetch notifications for user-a
+  const notifications = await ds.getRepository(Notification).find({ where: { recipientUserId: 'user-a' } });
+  expect(notifications.length).toBeGreaterThan(0);
+  const id = notifications[0].id;
+
+  const res = await request(app).patch(`/v1/notifications/${id}/read`).set('Authorization','Bearer user-a-token').send({ read: true });
+  expect(res.status).toBe(200);
+  const updated = await ds.getRepository(Notification).findOneBy({ id });
+  expect(updated?.read).toBe(true);
 });

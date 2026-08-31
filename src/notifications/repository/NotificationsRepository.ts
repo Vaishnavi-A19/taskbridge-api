@@ -14,15 +14,18 @@ export class NotificationsRepository {
     return this.getAuditRepo().save(r);
   }
 
-  findAuditByProject(projectId: string, orgId: string, from?: string, to?: string, eventType?: string) {
+  async findAuditByProject(projectId: string, orgId: string, from?: string, to?: string, eventType?: string) {
+    // SQLite doesn't support ->> JSON extraction; fetch by entityId and filter in JS for portability.
     const qb = this.getAuditRepo().createQueryBuilder('a')
-      .where('a.entityId = :projectId', { projectId })
-      .andWhere("a.actor->>'orgId' = :orgId", { orgId });
+      .where('a.entityId = :projectId', { projectId });
 
     if (eventType) qb.andWhere('a.eventType = :eventType', { eventType });
     if (from) qb.andWhere('a.createdAt >= :from', { from });
     if (to) qb.andWhere('a.createdAt <= :to', { to });
-    return qb.orderBy('a.createdAt', 'DESC').getMany();
+
+    const rows = await qb.orderBy('a.createdAt', 'DESC').getMany();
+    // Filter by actor.orgId in JS to remain DB-agnostic.
+    return rows.filter(r => (r.actor && (r.actor as any).orgId) === orgId);
   }
 
   createNotification(n: Partial<Notification>) {
