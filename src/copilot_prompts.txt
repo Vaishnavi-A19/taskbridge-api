@@ -1,0 +1,6 @@
+# Copilot prompts used during the assessment
+
+1) "Generate a Project model and a Project service with create, update status, get by team, and delete functions. Use a database."
+  - Used as-is to simulate contractor AI-generated code (saved unmodified in src/projects/generated_model.ts and src/projects/generated_service.ts).
+
+[Other prompts used during development are documented in PROMPTS.md]
